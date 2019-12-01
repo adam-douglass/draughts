@@ -2,6 +2,7 @@
 import inspect
 import json
 import types
+import typing
 
 
 class Field:
@@ -19,6 +20,9 @@ class Field:
 
 
 class Integer(Field):
+    # def __init__(self, **kwargs) -> int:
+    #     super().__init__(**kwargs)
+
     def cast(self, value):
         return int(value)
 

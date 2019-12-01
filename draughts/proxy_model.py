@@ -76,6 +76,12 @@ class List(Field):
             proxy = self.__existing_list_proxies[child] = _listProxyFactory(child)
         return proxy
 
+    def assign(self, instance, name, value):
+        # Cast the new list, and set the reference to it in the
+        value = self.cast(value)
+        object.__setattr__(instance, name, value)
+        object.__getattribute__(instance, '_data')[name] = value._data
+
 
 def _listProxyFactory(child: Field):
     if isinstance(child, (Compound, List)):
@@ -181,6 +187,12 @@ class Compound(Field):
             return value
         return self.model(value)
 
+    def assign(self, instance, name, value):
+        # Cast the new list, and set the reference to it in the
+        value = self.cast(value)
+        object.__setattr__(instance, name, value)
+        object.__getattribute__(instance, '_data')[name] = value._data
+
 
 def model(cls=None, **metadata):
     object_setattr = object.__setattr__
@@ -230,38 +242,38 @@ def model(cls=None, **metadata):
 
     field_names = set(fields.keys())
 
-    def fieldProperty(_name, _cast):
-        class FieldProperty:
-            # def __get__(self, instance, objtype):
-            #     return getattr(instance, _name)
-
-            def __set__(self, instance, value):
-                instance._data[_name] = _cast(value)
-        return FieldProperty()
-
-    class CompoundProperty:
-        def __init__(self, name, field):
-            self.name = name
-            self.field = field
-
-        # def __get__(self, instance, objtype):
-        #     return instance._compounds[self.name]
-
-        def __set__(self, instance, value):
-            value = instance._compounds[self.name] = casts[self.name](value)
-            instance._data[self.name] = value._data
-
-    class ListProperty:
-        def __init__(self, name, field):
-            self.name = name
-            self.field = field
-
-        # def __get__(self, instance, objtype):
-        #     return instance._compounds[self.name]
-
-        def __set__(self, instance, value):
-            value = instance._compounds[self.name] = casts[self.name](value)
-            instance._data[self.name] = value._data
+    # def fieldProperty(_name, _cast):
+    #     class FieldProperty:
+    #         # def __get__(self, instance, objtype):
+    #         #     return getattr(instance, _name)
+    #
+    #         def __set__(self, instance, value):
+    #             instance._data[_name] = _cast(value)
+    #     return FieldProperty()
+    #
+    # class CompoundProperty:
+    #     def __init__(self, name, field):
+    #         self.name = name
+    #         self.field = field
+    #
+    #     # def __get__(self, instance, objtype):
+    #     #     return instance._compounds[self.name]
+    #
+    #     def __set__(self, instance, value):
+    #         value = instance._compounds[self.name] = casts[self.name](value)
+    #         instance._data[self.name] = value._data
+    #
+    # class ListProperty:
+    #     def __init__(self, name, field):
+    #         self.name = name
+    #         self.field = field
+    #
+    #     # def __get__(self, instance, objtype):
+    #     #     return instance._compounds[self.name]
+    #
+    #     def __set__(self, instance, value):
+    #         value = instance._compounds[self.name] = casts[self.name](value)
+    #         instance._data[self.name] = value._data
 
     class ModelClass:
         __slots__ = ['_data'] + list(field_names)
@@ -318,7 +330,12 @@ def model(cls=None, **metadata):
                 raise ValueError(f"Unexpected key provided: {kwargs.keys()}")
 
         def __setattr__(self, key, value):
-            assign[key](self, key, value)
+            try:
+                assign[key](self, key, value)
+                # object_setattr(self, key, casts[key](value))
+            except KeyError:
+                # It should be a property setter then, this should do it, or raise an error for bad key
+                object_setattr(self, key, value)
 
         def __getitem__(self, name):
             try:

@@ -146,7 +146,7 @@ def model(cls=None, **metadata):
         __slots__ = field_keys
 
         def __init__(self, *args, **kwargs):
-            data = args[0] if args else {}
+            data = dict(args[0]) if args else {}
 
             if not isinstance(data, dict):
                 raise ValueError("Unexpected parameter type for model construction")

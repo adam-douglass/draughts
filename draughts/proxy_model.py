@@ -5,6 +5,8 @@ import types
 
 
 class Field:
+    __slots__ = ['metadata', 'metadata_defaults', 'name']
+
     """An abstract data field for a model."""
     def __init__(self, **kwargs):
         self.metadata = kwargs
@@ -19,8 +21,14 @@ class Field:
 
 
 class Integer(Field):
+    __slots__ = []
+
     def cast(self, value):
         return int(value)
+
+    @staticmethod
+    def assign(instance, name, value):
+        object.__setattr__(instance, name, int(value))
 
 
 class Float(Field):
@@ -29,8 +37,14 @@ class Float(Field):
 
 
 class String(Field):
+    __slots__ = []
+
     def cast(self, value):
         return str(value)
+
+    @staticmethod
+    def assign(instance, name, value):
+        object.__setattr__(instance, name, str(value))
 
 
 class List(Field):
@@ -169,6 +183,7 @@ class Compound(Field):
 
 
 def model(cls=None, **metadata):
+    object_setattr = object.__setattr__
     # If we are given default metadata
     if cls is None:
         def capture(cls):
@@ -181,6 +196,7 @@ def model(cls=None, **metadata):
     compounds = {}    # Compound type fields
     lists = {}        # List field types
     basic = {}        # Fields with simple types only
+    assign = {}
     casts = {}        # Each field's cast function
     properties = {}   # Any previously defined properties
     methods = {}      # Any methods from the class we want to preserve
@@ -189,6 +205,7 @@ def model(cls=None, **metadata):
             casts[name] = field.cast
             fields[name] = field
             field.name = name
+            assign[name] = field.assign
             field.metadata_defaults = metadata
             if isinstance(field, Compound):
                 compounds[name] = field
@@ -215,8 +232,8 @@ def model(cls=None, **metadata):
 
     def fieldProperty(_name, _cast):
         class FieldProperty:
-            def __get__(self, instance, objtype):
-                return instance._data[_name]
+            # def __get__(self, instance, objtype):
+            #     return getattr(instance, _name)
 
             def __set__(self, instance, value):
                 instance._data[_name] = _cast(value)
@@ -227,8 +244,8 @@ def model(cls=None, **metadata):
             self.name = name
             self.field = field
 
-        def __get__(self, instance, objtype):
-            return instance._compounds[self.name]
+        # def __get__(self, instance, objtype):
+        #     return instance._compounds[self.name]
 
         def __set__(self, instance, value):
             value = instance._compounds[self.name] = casts[self.name](value)
@@ -239,65 +256,69 @@ def model(cls=None, **metadata):
             self.name = name
             self.field = field
 
-        def __get__(self, instance, objtype):
-            return instance._compounds[self.name]
+        # def __get__(self, instance, objtype):
+        #     return instance._compounds[self.name]
 
         def __set__(self, instance, value):
             value = instance._compounds[self.name] = casts[self.name](value)
             instance._data[self.name] = value._data
 
     class ModelClass:
-        __slots__ = ['_data', '_compounds']
+        __slots__ = ['_data'] + list(field_names)
 
         def __init__(self, *args, **kwargs):
-            data = self._data = args[0] if args else {}
-            _compounds = self._compounds = {}
+            data = args[0] if args else {}
+            object_setattr(self, '_data', data)
 
             if not isinstance(data, dict):
                 raise ValueError("Unexpected parameter type for model construction")
 
-            kw_pop = kwargs.pop
-
-            # if set(data.keys()) - field_names:
-            #     raise ValueError(f"Unexpected key provided: {set(data.keys()) - field_names}")
+            if set(data.keys()) - field_names:
+                raise ValueError(f"Unexpected key provided: {set(data.keys()) - field_names}")
 
             for name, field in compounds.items():
                 if name in kwargs:
-                    _compounds[name] = field.model(kw_pop(name))
+                    view = field.model(kwargs.pop(name))
                 elif name in data:
-                    _compounds[name] = field.model(data[name])
+                    view = field.model(data[name])
                 elif 'default' in field.metadata:
-                    _compounds[name] = field.model(field['default'])
+                    view = field.model(field['default'])
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
 
-                data[name] = _compounds[name]._data
+                object_setattr(self, name, view)
+                data[name] = view._data
 
             for name, field in lists.items():
                 if name in kwargs:
-                    _compounds[name] = field.proxy(kw_pop(name))
+                    view = field.proxy(kwargs.pop(name))
                 elif name in data:
-                    _compounds[name] = field.proxy(data[name])
+                    view = field.proxy(data[name])
                 elif 'default' in field.metadata:
-                    _compounds[name] = field.proxy(field['default'])
+                    view = field.proxy(field['default'])
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
 
-                data[name] = _compounds[name]._data
+                object_setattr(self, name, view)
+                data[name] = view._data
 
             for name, field in basic.items():
                 cast = casts[name]
                 if name in kwargs:
-                    data[name] = cast(kw_pop(name))
+                    data[name] = cast(kwargs.pop(name))
                 elif name in data:
                     data[name] = cast(data[name])
                 elif 'default' in field.metadata:
                     data[name] = cast(field['default'])
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
+                object_setattr(self, name, data[name])
 
             if kwargs:
                 raise ValueError(f"Unexpected key provided: {kwargs.keys()}")
+
+        def __setattr__(self, key, value):
+            assign[key](self, key, value)
 
         def __getitem__(self, name):
             try:
@@ -330,12 +351,12 @@ def model(cls=None, **metadata):
     ModelClass.__doc__ = cls.__doc__
 
     # Apply the properties to the class so that our attribute access works
-    for name, field in compounds.items():
-        setattr(ModelClass, name, CompoundProperty(name, field))
-    for name, field in lists.items():
-        setattr(ModelClass, name, ListProperty(name, field))
-    for name, field in basic.items():
-        setattr(ModelClass, name, fieldProperty(name, field.cast))
+    # for name, field in compounds.items():
+    #     setattr(ModelClass, name, CompoundProperty(name, field))
+    # for name, field in lists.items():
+    #     setattr(ModelClass, name, ListProperty(name, field))
+    # for name, field in basic.items():
+    #     setattr(ModelClass, name, fieldProperty(name, field.cast))
 
     # If there were any pre-defined properties on the class make sure it is put back
     for name, _p in properties.items():

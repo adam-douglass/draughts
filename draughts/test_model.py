@@ -3,7 +3,7 @@ from typing import List
 
 import pytest
 
-from draughts import model, struct
+from draughts import model, struct_model, proxy_model
 
 
 class CatError(Exception):
@@ -11,7 +11,7 @@ class CatError(Exception):
     pass
 
 
-@pytest.fixture(params=[model, struct], ids=['model', 'struct'])
+@pytest.fixture(params=[model, struct_model, proxy_model], ids=['model', 'struct', 'proxy'])
 def src(request):
     return request.param
 
@@ -611,10 +611,15 @@ def speeds():
         a = model.Integer()
         b = model.String()
 
-    @struct.model
+    @struct_model.model
     class STest:
-        a = struct.Integer()
-        b = struct.String()
+        a = struct_model.Integer()
+        b = struct_model.String()
+
+    @proxy_model.model
+    class PTest:
+        a = proxy_model.Integer()
+        b = proxy_model.String()
 
     # @model.model
     # class MTestEnvelope:
@@ -622,6 +627,7 @@ def speeds():
 
     m_x = MTest(a=10, b="x"*1000)
     s_x = STest(a=10, b="x"*1000)
+    p_x = PTest(a=10, b="x"*1000)
     # e = TestEnvelope(a=x)
     string = 'y'*2990
 
@@ -630,21 +636,25 @@ def speeds():
             timeit('x = {"a": int(10), "b":str("x"*1000)}', number=number),
             timeit('Test(a=10, b="x"*1000)', globals={'Test': MTest}, number=number),
             timeit('Test(a=10, b="x"*1000)', globals={'Test': STest}, number=number),
+            timeit('Test(a=10, b="x"*1000)', globals={'Test': PTest}, number=number),
         ],
         'write_int': [
             timeit('x["a"] = 100', globals={'x': {}}, number=number),
             timeit('x.a = 100', globals={'x': m_x}, number=number),
             timeit('x.a = 100', globals={'x': s_x}, number=number),
+            timeit('x.a = 100', globals={'x': p_x}, number=number),
         ],
         'write_int_cast': [
             timeit('x["a"] = int("100")', globals={'x': {}}, number=number),
             timeit('x.a = "100"', globals={'x': m_x}, number=number),
             timeit('x.a = "100"', globals={'x': s_x}, number=number),
+            timeit('x.a = "100"', globals={'x': p_x}, number=number),
         ],
         'get_int': [
             timeit('y = x.get("a")', globals={'x': {}}, number=number),
             timeit('y = x.a', globals={'x': m_x}, number=number),
             timeit('y = x.a', globals={'x': s_x}, number=number),
+            timeit('y = x.a', globals={'x': p_x}, number=number),
         ],
         # [
         #     timeit('y = e.get("a", {}).get("a")', globals={'e': {}}, number=number),
@@ -654,6 +664,7 @@ def speeds():
             None,
             timeit('x.b = string', globals={'x': m_x, 'string': string}, number=number),
             timeit('x.b = string', globals={'x': s_x, 'string': string}, number=number),
+            timeit('x.b = string', globals={'x': p_x, 'string': string}, number=number),
         ]
     }
 

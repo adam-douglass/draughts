@@ -3,7 +3,7 @@ import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, Compound, List
+from draughts.fields import String, Integer, List, Compound, Mapping
 
 
 class CatError(Exception):
@@ -44,33 +44,6 @@ def test_index_defaults():
     assert fields['default']['index'] is False
     assert fields['indexed']['index'] is True
     assert fields['not_indexed']['index'] is False
-
-# TODO is this actually the desired behaviour? it could be quite complex.
-# def test_compound_index_defaults():
-#     @model
-#     class SubModel:
-#         default = String()
-#         indexed = String(index=True)
-#         not_indexed = String(index=False)
-#
-#     @model
-#     class Test1:
-#         default = Compound(SubModel)
-#         indexed = Compound(SubModel, index=True)
-#         not_indexed = Compound(SubModel, index=False)
-#
-#     fields = Test1.flat_fields()
-#     assert fields['default.default']['index'] is None
-#     assert fields['default.indexed']['index'] is True
-#     assert fields['default.not_indexed']['index'] is False
-#
-#     assert fields['indexed.default']['index'] is None
-#     assert fields['indexed.indexed']['index'] is True
-#     assert fields['indexed.not_indexed']['index'] is False
-#
-#     assert fields['not_indexed.default']['index'] is None
-#     assert fields['not_indexed.indexed']['index'] is True
-#     assert fields['not_indexed.not_indexed']['index'] is False
 
 
 @model
@@ -478,12 +451,6 @@ def test_mapping():
     with pytest.raises(KeyError):
         _ = test.a['abc']
 
-    with pytest.raises(KeyError):
-        test.a['abc.abc.abc'] = None
-
-    with pytest.raises(KeyError):
-        test.a['4abc.abc.abc'] = None
-
     test.a['cat'] = 10
     test.a['dog'] = -100
 
@@ -496,6 +463,76 @@ def test_mapping():
     test = Test({'a': {'walk': 100}})
     assert len(test.a) == 1
     assert test.a['walk'] == 100
+
+
+def test_mapping_of_mapping():
+    @model
+    class Test:
+        a = Mapping(Mapping(Integer()), default={})
+
+    test = Test({'a': {'x': {}}})
+
+    assert len(test.a) == 1
+
+    with pytest.raises(KeyError):
+        _ = test.a['abc']
+
+    _ = test.a['x']
+    with pytest.raises(KeyError):
+        _ = test.a['x']['abc']
+
+    with pytest.raises(AttributeError):
+        test.a['cat'] = 10
+
+    test.a['x']['cat'] = 10
+    test.a['y'] = {'dog': -100}
+
+    assert len(test.a) == 2
+    assert len(test.a['x']) == 1
+    assert len(test.a['y']) == 1
+    assert test.a['y']['dog'] == -100
+
+    with pytest.raises(AttributeError):
+        test.a['red'] = 'can'
+    with pytest.raises(ValueError):
+        test.a['y']['red'] = 'can'
+
+    test = Test({'a': {'b': {'walk': 100}}})
+    assert len(test.a) == 1
+    assert len(test.a['b']) == 1
+    assert test.a['b']['walk'] == 100
+
+
+def test_mapping_of_compound():
+    @model
+    class Pair:
+        a = Integer()
+        b = Integer()
+
+    @model
+    class Test:
+        a = Mapping(Compound(Pair), default={})
+
+    test = Test({})
+
+    assert len(test.a) == 0
+
+    with pytest.raises(KeyError):
+        _ = test.a['abc']
+
+    test.a['cat'] = {'a': 10, 'b': -100}
+    test.a['dog'] = Pair(a=-100, b=999)
+
+    assert len(test.a) == 2
+    assert test.a['dog'].a == -100
+
+    with pytest.raises(ValueError):
+        test.a['red'] = 'can'
+
+    test = Test({'a': {'walk': dict(a=1, b=1)}})
+    assert len(test.a) == 1
+    assert test.a['walk'].a == 1
+    assert test.a['walk'].b == 1
 
 
 def test_enum():
@@ -529,41 +566,41 @@ def test_enum():
         et.enum = True
 
 
-def test_named_item_access():
-    @model
-    class Inner:
-        a: int = Integer()
-        b: int = Integer()
-
-    @model
-    class Test:
-        a: Inner = Compound(Inner)
-        b: int = Integer()
-
-    test = Test(dict(a=dict(a=10, b=100), b=99))
-
-    assert test.a['a'] == 10
-    assert test['a'].a == 10
-    assert test.a.a == 10
-    assert test['a']['a'] == 10
-    test.a['a'] = 1
-    assert test.a['a'] == 1
-    assert test['a'].a == 1
-    assert test.a.a == 1
-    assert test['a']['a'] == 1
-    test['a'].a = -1
-    assert test.a['a'] == -1
-    assert test['a'].a == -1
-    assert test.a.a == -1
-    assert test['a']['a'] == -1
-
-    with pytest.raises(KeyError):
-        _ = test['x']
-
-    with pytest.raises(KeyError):
-        test['x'] = 100
-
-    assert raw(test['a']) == {'a': -1, 'b': 100}
+# def test_named_item_access():
+#     @model
+#     class Inner:
+#         a: int = Integer()
+#         b: int = Integer()
+#
+#     @model
+#     class Test:
+#         a: Inner = Compound(Inner)
+#         b: int = Integer()
+#
+#     test = Test(dict(a=dict(a=10, b=100), b=99))
+#
+#     assert test.a['a'] == 10
+#     assert test['a'].a == 10
+#     assert test.a.a == 10
+#     assert test['a']['a'] == 10
+#     test.a['a'] = 1
+#     assert test.a['a'] == 1
+#     assert test['a'].a == 1
+#     assert test.a.a == 1
+#     assert test['a']['a'] == 1
+#     test['a'].a = -1
+#     assert test.a['a'] == -1
+#     assert test['a'].a == -1
+#     assert test.a.a == -1
+#     assert test['a']['a'] == -1
+#
+#     with pytest.raises(KeyError):
+#         _ = test['x']
+#
+#     with pytest.raises(KeyError):
+#         test['x'] = 100
+#
+#     assert raw(test['a']) == {'a': -1, 'b': 100}
 
 
 def test_dates():
@@ -574,6 +611,7 @@ def test_optional():
     raise NotImplementedError()
 
 
-def test_union():
-    raise NotImplementedError()
+# TODO maybe tagged unions?
+# def test_union():
+#     raise NotImplementedError()
 

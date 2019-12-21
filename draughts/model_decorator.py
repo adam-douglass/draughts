@@ -1,11 +1,12 @@
 """"""
+from __future__ import annotations
 import json
 import weakref
 
 import typing
 from typing import Dict, TYPE_CHECKING
 
-from .fields import Field, Compound, List
+from .fields.bases import ProxyField, Field
 
 
 _fields: Dict[type, Dict[str, Field]] = typing.cast(Dict, weakref.WeakKeyDictionary())
@@ -39,7 +40,6 @@ def model(cls=None, **metadata):
     fields = {}       # The fields of the object
     flat_fields = {}  # The fields of the object, recursively flattened
     compounds = {}    # Compound type fields
-    lists = {}        # List field types
     basic = {}        # Fields with simple types only
     casts = {}        # Each field's cast function
     properties = {}   # Any previously defined properties
@@ -52,17 +52,15 @@ def model(cls=None, **metadata):
             fields[_name] = field
             field.name = _name
             field.metadata_defaults = metadata
-            if isinstance(field, Compound):
+            if isinstance(field, ProxyField):
                 compounds[_name] = field
-                for sub_name, sub_field in _flat_fields[field.model].items():
-                    flat_fields[_name + '.' + sub_name] = sub_field
-            elif isinstance(field, List):
-                lists[_name] = field
-                for sub_name, sub_field in field.flat_fields().items():
+                for sub_name, sub_field in field.flat_fields(prefix=_name).items():
                     flat_fields[sub_name] = sub_field
-            else:
+            elif isinstance(field, Field):
                 basic[_name] = field
                 flat_fields[_name] = field
+            else:
+                raise NotImplementedError()
 
         elif isinstance(field, property):
             properties[_name] = field
@@ -75,7 +73,7 @@ def model(cls=None, **metadata):
 
     field_names = set(fields.keys())
 
-    def fieldProperty(_name, _cast):
+    def field_property(_name, _cast):
         class FieldProperty:
             def __get__(self, instance, objtype):
                 return instance._data[_name]
@@ -96,17 +94,6 @@ def model(cls=None, **metadata):
             value = instance._compounds[self.name] = casts[self.name](value)
             instance._data[self.name] = value._data
 
-    class ListProperty:
-        def __init__(self, name, field):
-            self.name = name
-            self.field = field
-
-        def __get__(self, instance, objtype):
-            return instance._compounds[self.name]
-
-        def __set__(self, instance, value):
-            value = instance._compounds[self.name] = casts[self.name](value)
-            instance._data[self.name] = value._data
 
     class ModelClass:
         __slots__ = ['_data', '_compounds']
@@ -125,30 +112,15 @@ def model(cls=None, **metadata):
 
             for name, field in compounds.items():
                 if name in kwargs:
-                    _compounds[name] = field.model(kw_pop(name))
+                    _compounds[name] = field.cast(kw_pop(name))
                 elif name in data:
-                    _compounds[name] = field.model(data[name])
+                    _compounds[name] = field.cast(data[name])
                 elif 'default' in field.metadata:
-                    _compounds[name] = field.model(field['default'])
+                    _compounds[name] = field.cast(field['default'])
                 elif 'factory' in field.metadata:
-                    _compounds[name] = field.model(field['factory']())
+                    _compounds[name] = field.cast(field['factory']())
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
-
-                data[name] = _compounds[name]._data
-
-            for name, field in lists.items():
-                if name in kwargs:
-                    _compounds[name] = field.proxy(kw_pop(name))
-                elif name in data:
-                    _compounds[name] = field.proxy(data[name])
-                elif 'default' in field.metadata:
-                    _compounds[name] = field.proxy(field['default'])
-                elif 'factory' in field.metadata:
-                    _compounds[name] = field.model(field['factory']())
-                else:
-                    raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
-
                 data[name] = _compounds[name]._data
 
             for name, field in basic.items():
@@ -167,22 +139,11 @@ def model(cls=None, **metadata):
             if kwargs:
                 raise ValueError(f"Unexpected key provided: {kwargs.keys()}")
 
-        # def __getitem__(self, name):
-        #     try:
-        #         return getattr(self, name)
-        #     except AttributeError:
-        #         raise KeyError(name)
-        #
-        # def __setitem__(self, name, value):
-        #     try:
-        #         return setattr(self, name, value)
-        #     except AttributeError:
-        #         raise KeyError(name)
-
     # Lets over write some class properties to make it a little nicer
     ModelClass.__name__ = cls.__name__
     ModelClass.__doc__ = cls.__doc__
-    ModelClass.__annotations__ = cls.__annotations__
+    if hasattr(cls, '__annotations__'):
+        ModelClass.__annotations__ = cls.__annotations__
 
     _fields[ModelClass] = fields
     _flat_fields[ModelClass] = flat_fields
@@ -190,10 +151,8 @@ def model(cls=None, **metadata):
     # Apply the properties to the class so that our attribute access works
     for _name, field in compounds.items():
         setattr(ModelClass, _name, CompoundProperty(_name, field))
-    for _name, field in lists.items():
-        setattr(ModelClass, _name, ListProperty(_name, field))
     for _name, field in basic.items():
-        setattr(ModelClass, _name, fieldProperty(_name, field.cast))
+        setattr(ModelClass, _name, field_property(_name, field.cast))
 
     # If there were any pre-defined properties on the class make sure it is put back
     for _name, _p in properties.items():

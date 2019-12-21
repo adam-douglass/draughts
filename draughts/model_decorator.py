@@ -132,7 +132,7 @@ def model(cls=None, **metadata):
                 elif 'default' in field.metadata:
                     data[name] = cast(field['default'])
                 elif 'factory' in field.metadata:
-                    _compounds[name] = field.model(field['factory']())
+                    data[name] = cast(field['factory']())
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
 

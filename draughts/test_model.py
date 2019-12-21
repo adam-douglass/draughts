@@ -1,9 +1,12 @@
+import enum
 import typing
+import time
+
 import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Optional, Enum
 
 
 class CatError(Exception):
@@ -536,19 +539,38 @@ def test_mapping_of_compound():
 
 
 def test_enum():
-    @model(index=True, store=True)
+    class LoggingTargets(enum.Enum):
+        Magic = 0
+        Solr = 1
+        ElasticSearch = 2
+
+    @model
     class EnumTest:
-        enum = Enum(values=("magic", "solr", "elasticsearch"))
+        enum = Enum(LoggingTargets)
 
-    et = EnumTest({"enum": "magic"})
-    assert et.enum == "magic"
+    et = EnumTest({"enum": LoggingTargets.Magic})
+    assert et.enum == LoggingTargets.Magic
 
-    et.enum = "magic"
-    assert et.enum == "magic"
-    et.enum = "solr"
-    assert et.enum == "solr"
-    et.enum = "elasticsearch"
-    assert et.enum == "elasticsearch"
+    et.enum = LoggingTargets.Magic
+    assert et.enum == LoggingTargets.Magic
+    et.enum = LoggingTargets.Solr
+    assert et.enum == LoggingTargets.Solr
+    et.enum = LoggingTargets.ElasticSearch
+    assert et.enum == LoggingTargets.ElasticSearch
+
+    et.enum = 0
+    assert et.enum == LoggingTargets.Magic
+    et.enum = 1
+    assert et.enum == LoggingTargets.Solr
+    et.enum = 2
+    assert et.enum == LoggingTargets.ElasticSearch
+
+    et.enum = "Magic"
+    assert et.enum == LoggingTargets.Magic
+    et.enum = "Solr"
+    assert et.enum == LoggingTargets.Solr
+    et.enum = "ElasticSearch"
+    assert et.enum == LoggingTargets.ElasticSearch
 
     with pytest.raises(ValueError):
         et.enum = "bob"
@@ -557,58 +579,72 @@ def test_enum():
         et.enum = "mysql"
 
     with pytest.raises(ValueError):
-        et.enum = 1
-
-    with pytest.raises(TypeError):
         et.enum = ["a"]
 
+
+def test_timestamp():
+    @model
+    class Test:
+        start: float = Timestamp()
+        end: float = Timestamp(factory=time.time)
+
+    a = Test(start=0)
+    assert a.start == 0
+    a.start = time.time()
+
+    assert a.start - a.end < 1
+
     with pytest.raises(ValueError):
-        et.enum = True
+        a.end = 'now'
 
 
-# def test_named_item_access():
-#     @model
-#     class Inner:
-#         a: int = Integer()
-#         b: int = Integer()
-#
+# def test_dates():
 #     @model
 #     class Test:
-#         a: Inner = Compound(Inner)
-#         b: int = Integer()
+#         start: float = DateTime()
+#         end: float = DateTime(factory=time.time)
 #
-#     test = Test(dict(a=dict(a=10, b=100), b=99))
+#     a = Test(start=0)
+#     assert a.start == 0
+#     a.start = time.time()
 #
-#     assert test.a['a'] == 10
-#     assert test['a'].a == 10
-#     assert test.a.a == 10
-#     assert test['a']['a'] == 10
-#     test.a['a'] = 1
-#     assert test.a['a'] == 1
-#     assert test['a'].a == 1
-#     assert test.a.a == 1
-#     assert test['a']['a'] == 1
-#     test['a'].a = -1
-#     assert test.a['a'] == -1
-#     assert test['a'].a == -1
-#     assert test.a.a == -1
-#     assert test['a']['a'] == -1
+#     assert a.start - a.end < 1
 #
-#     with pytest.raises(KeyError):
-#         _ = test['x']
-#
-#     with pytest.raises(KeyError):
-#         test['x'] = 100
-#
-#     assert raw(test['a']) == {'a': -1, 'b': 100}
-
-
-def test_dates():
-    raise NotImplementedError()
+#     with pytest.raises(ValueError):
+#         a.end = 'now'
 
 
 def test_optional():
-    raise NotImplementedError()
+    @model
+    class Pair:
+        a = Integer()
+        b = Integer()
+
+    @model
+    class Test:
+        a = Optional(Integer())
+        b = Optional(List(Integer()))
+        c = Optional(Compound(Pair))
+        d = Optional(Mapping(Compound(Pair)))
+
+    x = Test(b=None)
+
+    assert x.a is None
+    x.a = 10
+    with pytest.raises(ValueError):
+        x.a = 'now'
+    assert x.a == 10
+    x.a = None
+    assert x.a is None
+
+    x.b = [10, '100']
+    assert x.b == [10, 100]
+
+    x.c = dict(a=999, b=999)
+    assert x.c.a == 999
+
+    x.d = dict(aaa=dict(a=-999, b=999))
+    assert x.d['aaa'].a == -999
 
 
 # TODO maybe tagged unions?

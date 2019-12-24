@@ -1,6 +1,6 @@
 from .basic import Boolean, Integer, Float, Timestamp, Enum
-from .basic import String, Keyword, Text
-from .basic import Optional
+from .basic import String, Keyword, Text, JSON, UUID
+from .basic import Optional, Any
 from .complex import Compound
 
 

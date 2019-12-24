@@ -124,4 +124,3 @@ def _mapping_proxy(child: Field):
 
     return MappingProxy
 
-

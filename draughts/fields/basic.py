@@ -1,3 +1,6 @@
+import json
+import uuid
+
 from .bases import Field
 
 
@@ -8,7 +11,7 @@ class Any(Field):
 
 class Boolean(Field):
     def cast(self, value):
-        if isinstance(str, value):
+        if isinstance(value, str):
             return value[0:4].lower() == 'true'
         return bool(value)
 
@@ -30,9 +33,23 @@ class String(Field):
         return str(value)
 
 
+class Bytes(Field):
+    def cast(self, value):
+        if isinstance(value, str):
+            return value.encode()
+        return bytes(value)
+
+
 class Keyword(String):
     """A short string with symbolic value."""
     pass
+
+
+class UUID(Keyword):
+    def __init__(self, **kwargs):
+        if kwargs.get('factory') == 'random':
+            kwargs['factory'] = lambda: uuid.uuid4().hex
+        super().__init__(**kwargs)
 
 
 class Text(String):
@@ -73,3 +90,14 @@ class Enum(Field):
             return self.conversion[value]
         except (KeyError, TypeError):
             raise ValueError(f"Not an accepted enum value {value}")
+
+
+class JSON(String):
+    """A string field that checks that its content is always valid JSON"""
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+    def cast(self, value):
+        value = super().cast(value)
+        json.loads(value)
+        return value

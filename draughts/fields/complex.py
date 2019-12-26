@@ -111,16 +111,31 @@ def _mapping_proxy(child: Field):
             self._data = data
             self._view = {k: cast(_o) for k, _o in data.items()}
 
+        def __iter__(self):
+            return iter(self._view)
+
         def __setitem__(self, key, value):
             view = cast(value)
             self._view[key] = view
             self._data[key] = view._data
+
+        def __contains__(self, item):
+            return item in self._view
 
         def __getitem__(self, item):
             return self._view[item]
 
         def __len__(self):
             return len(self._data)
+
+        def values(self):
+            return self._view.values()
+
+        def keys(self):
+            return self._data.keys()
+
+        def items(self):
+            return self._view.items()
 
     return MappingProxy
 

@@ -333,7 +333,6 @@ from __future__ import annotations
 #
 from .model_decorator import model_fields
 from .fields.bases import Field, ProxyField
-from .fields import Optional
 
 
 def minimal_field_sample(field_spec: Field):
@@ -344,7 +343,7 @@ def minimal_field_sample(field_spec: Field):
 
 def minimal_sample(model, **data):
     for field_name, field_spec in model_fields(model).items():
-        if isinstance(field_spec, Optional) or field_name in data:
+        if field_spec['optional'] or field_name in data:
             continue
         if 'default' not in field_spec and 'factory' not in field_spec:
             data[field_name] = minimal_field_sample(field_spec)

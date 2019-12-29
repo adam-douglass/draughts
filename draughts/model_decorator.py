@@ -3,9 +3,8 @@ import json
 import weakref
 
 import typing
-from typing import Dict, TYPE_CHECKING
+from typing import Dict
 
-from .fields import Optional
 from .fields.bases import ProxyField, Field
 
 
@@ -48,16 +47,19 @@ def model(cls=None, **metadata):
 
     for _name, field in cls.__dict__.items():
         if isinstance(field, Field):
-
-            if isinstance(field, Optional):
-                cast = field.cast
-                field = field.field
-                field.cast = cast
-
             casts[_name] = field.cast
             fields[_name] = field
             field.name = _name
             field.metadata_defaults = metadata
+
+            if field.metadata.get('optional', False):
+                def make_optional_cast(_c):
+                    def _cast(value):
+                        if value is None:
+                            return None
+                        return _c(value)
+                    return _cast
+                field.cast = casts[_name] = make_optional_cast(field.cast)
 
             if isinstance(field, ProxyField):
                 compounds[_name] = field
@@ -140,6 +142,8 @@ def model(cls=None, **metadata):
                     data[name] = cast(field['default'])
                 elif 'factory' in field.metadata:
                     data[name] = cast(field['factory']())
+                elif field.metadata.get('optional', False):
+                    data[name] = None
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
 

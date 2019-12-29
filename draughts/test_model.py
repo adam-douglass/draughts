@@ -6,7 +6,7 @@ import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Optional, Enum, Keyword
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword
 
 
 class CatError(Exception):
@@ -622,10 +622,10 @@ def test_optional():
 
     @model
     class Test:
-        a = Optional(Integer())
-        b = Optional(List(Integer()))
-        c = Optional(Compound(Pair))
-        d = Optional(Mapping(Compound(Pair)))
+        a = Integer(optional=True)
+        b = List(Integer(), optional=True)
+        c = Compound(Pair, optional=True)
+        d = Mapping(Compound(Pair), optional=True)
 
     x = Test(b=None)
 
@@ -656,7 +656,7 @@ def test_optional_compound():
 
     @model
     class Outer:
-        tag = Optional(Compound(Inner))
+        tag = Compound(Inner, optional=True)
 
     tag_data = {'label': 'label', 'count': 10}
     x = Outer(tag=tag_data)

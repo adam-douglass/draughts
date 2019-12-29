@@ -78,20 +78,6 @@ class Timestamp(Float):
     pass
 
 
-class Optional(Field):
-    """Allow None values for the wrapped field type."""
-    def __init__(self, field):
-        super().__init__(default=None)
-        self.field = field
-        if 'default' not in field or 'factory' not in field:
-            field.metadata['default'] = None
-
-    def cast(self, value):
-        if value is None:
-            return value
-        return self.field.cast(value)
-
-
 class Enum(Field):
     """A field for enum values."""
     def __init__(self, enum, **kwargs):

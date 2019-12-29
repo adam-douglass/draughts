@@ -6,6 +6,9 @@ class Field:
         self.metadata_defaults = {}
         self.name = None
 
+    def __contains__(self, item):
+        return item in self.metadata or item in self.metadata_defaults
+
     def __getitem__(self, item):
         return self.metadata.get(item, self.metadata_defaults.get(item))
 

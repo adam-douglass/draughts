@@ -67,6 +67,8 @@ class Optional(Field):
     def __init__(self, field):
         super().__init__(default=None)
         self.field = field
+        if 'default' not in field or 'factory' not in field:
+            field.metadata['default'] = None
 
     def cast(self, value):
         if value is None:

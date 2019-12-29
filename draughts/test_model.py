@@ -6,7 +6,7 @@ import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Optional, Enum
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Optional, Enum, Keyword
 
 
 class CatError(Exception):
@@ -645,6 +645,26 @@ def test_optional():
 
     x.d = dict(aaa=dict(a=-999, b=999))
     assert x.d['aaa'].a == -999
+
+
+def test_optional_compound():
+    """Ensure that optional compounds are still handled as normal."""
+    @model
+    class Inner:
+        label = Keyword()
+        count = Integer()
+
+    @model
+    class Outer:
+        tag = Optional(Compound(Inner))
+
+    tag_data = {'label': 'label', 'count': 10}
+    x = Outer(tag=tag_data)
+    assert x.tag.label == 'label'
+    x.tag.label = 'big'
+    assert tag_data['label'] == 'big'
+
+    assert raw(x) == {'tag': tag_data}
 
 
 # TODO maybe tagged unions?

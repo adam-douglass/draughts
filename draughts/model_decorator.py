@@ -5,6 +5,7 @@ import weakref
 import typing
 from typing import Dict, TYPE_CHECKING
 
+from .fields import Optional
 from .fields.bases import ProxyField, Field
 
 
@@ -47,10 +48,17 @@ def model(cls=None, **metadata):
 
     for _name, field in cls.__dict__.items():
         if isinstance(field, Field):
+
+            if isinstance(field, Optional):
+                cast = field.cast
+                field = field.field
+                field.cast = cast
+
             casts[_name] = field.cast
             fields[_name] = field
             field.name = _name
             field.metadata_defaults = metadata
+
             if isinstance(field, ProxyField):
                 compounds[_name] = field
                 for sub_name, sub_field in field.flat_fields(prefix=_name).items():

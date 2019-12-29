@@ -9,7 +9,7 @@ def List(field_type, **kwargs):
     from .bases import MultivaluedField, ProxyField
     from .multivalued import SimpleList
     from .complex import List
-    if isinstance(field_type, (MultivaluedField, ProxyField)):
+    if isinstance(field_type, ProxyField):
         return List(field_type, **kwargs)
     return SimpleList(field_type, **kwargs)
 

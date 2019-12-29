@@ -9,8 +9,9 @@ class Compound(ProxyField):
 
     def cast(self, value):
         if isinstance(value, self.model):
-            return value
-        return self.model(value)
+            return value, value._data
+        obj = self.model(value)
+        return obj, obj._data
 
     def flat_fields(self, prefix):
         from ..model_decorator import model_fields_flat
@@ -29,8 +30,9 @@ class List(ProxyField):
         if not isinstance(value, list):
             value = list(value)
         if isinstance(value, self.proxy):
-            return value
-        return self.proxy(value)
+            return value, value._data
+        obj = self.proxy(value)
+        return obj, obj._data
 
     def flat_fields(self, prefix):
         return self.field.flat_fields(prefix + '[].')
@@ -45,21 +47,26 @@ def _list_proxy(child: Field):
         """A proxy object over a list to enforce typing."""
 
         def __init__(self, data):
+            _t = [cast(_o) for _o in data]
+            self._view = [_r[0] for _r in _t]
             self._data = data
-            self._view = [cast(_o) for _o in data]
+            for index, _r in enumerate(_t):
+                self._data[index] = _r
 
         def append(self, item):
-            view = cast(item)
+            view, data = cast(item)
             self._view.append(view)
-            self._data.append(view._data)
+            self._data.append(data)
 
         def extend(self, iterable):
-            view = [cast(_o) for _o in iterable]
-            self._view.extend(view)
-            self._data.extend((_v._data for _v in view))
+            _t = [cast(_o) for _o in iterable]
+            self._view.extend((_r[0] for _r in _t))
+            self._data.extend((_r[1] for _r in _t))
 
         def insert(self, index, item):
-            self._data.insert(index, cast(item))
+            v, d = cast(item)
+            self._view.insert(index, v)
+            self._data.insert(index, d)
 
         def __len__(self):
             return len(self._data)
@@ -67,12 +74,12 @@ def _list_proxy(child: Field):
         def __setitem__(self, key, value):
             if isinstance(key, slice):
                 view = [cast(_o) for _o in value]
-                self._view[key] = view
-                self._data[key] = [_v._data for _v in view]
+                self._view[key] = [_v[0] for _v in view]
+                self._data[key] = [_v[1] for _v in view]
             else:
-                view = cast(value)
+                view, data = cast(value)
                 self._view[key] = view
-                self._data[key] = view._data
+                self._data[key] = data
 
         def __iadd__(self, other):
             self.extend(other)
@@ -93,8 +100,9 @@ class Mapping(ProxyField):
         if not isinstance(value, dict):
             value = dict(value)
         if isinstance(value, self.proxy):
-            return value
-        return self.proxy(value)
+            return value, value._data
+        obj = self.proxy(value)
+        return obj, obj._data
 
     def flat_fields(self, prefix):
         return self.field.flat_fields(prefix + '.*.')
@@ -109,15 +117,15 @@ def _mapping_proxy(child: Field):
 
         def __init__(self, data):
             self._data = data
-            self._view = {k: cast(_o) for k, _o in data.items()}
+            self._view = {k: cast(_o)[0] for k, _o in data.items()}
 
         def __iter__(self):
             return iter(self._view)
 
         def __setitem__(self, key, value):
-            view = cast(value)
+            view, data = cast(value)
             self._view[key] = view
-            self._data[key] = view._data
+            self._data[key] = data
 
         def __contains__(self, item):
             return item in self._view

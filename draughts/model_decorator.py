@@ -100,9 +100,7 @@ def model(cls=None, **metadata):
             return instance._compounds[self.name]
 
         def __set__(self, instance, value):
-            value = instance._compounds[self.name] = casts[self.name](value)
-            instance._data[self.name] = value._data
-
+            instance._compounds[self.name], instance._data[self.name] = casts[self.name](value)
 
     class ModelClass:
         __slots__ = ['_data', '_compounds']
@@ -121,16 +119,19 @@ def model(cls=None, **metadata):
 
             for name, field in compounds.items():
                 if name in kwargs:
-                    _compounds[name] = field.cast(kw_pop(name))
+                    _compounds[name], data[name] = field.cast(kw_pop(name))
                 elif name in data:
-                    _compounds[name] = field.cast(data[name])
+                    _compounds[name], data[name] = field.cast(data[name])
                 elif 'default' in field.metadata:
-                    _compounds[name] = field.cast(field['default'])
+                    _compounds[name], data[name] = field.cast(field['default'])
                 elif 'factory' in field.metadata:
-                    _compounds[name] = field.cast(field['factory']())
+                    _compounds[name], data[name] = field.cast(field['factory']())
+                elif field.metadata.get('optional', False):
+                    _compounds[name] = None
+                    data[name] = None
+                    continue
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
-                data[name] = _compounds[name]._data
 
             for name, field in basic.items():
                 cast = casts[name]

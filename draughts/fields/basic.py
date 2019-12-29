@@ -1,5 +1,7 @@
 import json
 import uuid
+import random
+import string
 
 from .bases import Field
 
@@ -8,6 +10,9 @@ class Any(Field):
     def cast(self, value):
         return value
 
+    def sample(self):
+        return 4
+
 
 class Boolean(Field):
     def cast(self, value):
@@ -15,15 +20,24 @@ class Boolean(Field):
             return value[0:4].lower() == 'true'
         return bool(value)
 
+    def sample(self):
+        return random.getrandbits(1) == 0
+
 
 class Integer(Field):
     def cast(self, value):
         return int(value)
 
+    def sample(self):
+        return random.randint(-2**30, 2**30)
+
 
 class Float(Field):
     def cast(self, value):
         return float(value)
+
+    def sample(self):
+        return random.random() * 1000 - 500
 
 
 class String(Field):
@@ -42,7 +56,9 @@ class Bytes(Field):
 
 class Keyword(String):
     """A short string with symbolic value."""
-    pass
+    def sample(self):
+        length = random.randint(0, 128)
+        return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 class UUID(Keyword):
@@ -103,3 +119,12 @@ class JSON(String):
         value = super().cast(value)
         json.loads(value)
         return value
+
+    def sample(self):
+        return random.choice([
+            '{}',
+            '[]',
+            '0',
+            '"abc"',
+            'null',
+        ])

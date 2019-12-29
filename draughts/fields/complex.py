@@ -138,4 +138,3 @@ def _mapping_proxy(child: Field):
             return self._view.items()
 
     return MappingProxy
-

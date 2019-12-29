@@ -15,6 +15,10 @@ class Field:
     def cast(self, value):
         raise NotImplementedError()
 
+    def sample(self):
+        """Generate a random value appropriate for this field."""
+        raise NotImplementedError(self.__class__)
+
 
 class MultivaluedField(Field):
     """A base for fields where the value could have many parts, but don't require a proxy."""
@@ -22,6 +26,9 @@ class MultivaluedField(Field):
         super().__init__(**kwargs)
 
     def cast(self, value):
+        raise NotImplementedError()
+
+    def sample(self):
         raise NotImplementedError()
 
     def flat_fields(self, prefix):
@@ -34,6 +41,9 @@ class ProxyField(Field):
         super().__init__(**kwargs)
 
     def cast(self, value):
+        raise NotImplementedError()
+
+    def sample(self):
         raise NotImplementedError()
 
     def flat_fields(self, prefix):

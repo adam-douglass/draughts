@@ -1,3 +1,6 @@
+![](https://github.com/adam-douglass/draughts/workflows/pytest/badge.svg)
+[![codecov](https://codecov.io/gh/adam-douglass/draughts/branch/master/graph/badge.svg)](https://codecov.io/gh/adam-douglass/draughts)
+
 Draughts
 ========
 

@@ -9,8 +9,8 @@ setup(
     author_email="douglass@malloc.ca",
     description="Generates boilerplate for data objects.",
     keywords="utility typechecking",
-    url="https://github.com/adam-douglass/draughts/"
+    url="https://github.com/adam-douglass/draughts/",
     extras_require={
         'test': ['pytest', 'pytest-subtests']
-    }
+    },
 )

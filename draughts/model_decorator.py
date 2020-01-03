@@ -120,7 +120,7 @@ def model(cls=None, **metadata):
             for name, field in compounds.items():
                 if name in kwargs:
                     _compounds[name], data[name] = field.cast(kw_pop(name))
-                elif name in data:
+                elif data.get(name) is not None:
                     _compounds[name], data[name] = field.cast(data[name])
                 elif 'default' in field.metadata:
                     _compounds[name], data[name] = field.cast(field['default'])

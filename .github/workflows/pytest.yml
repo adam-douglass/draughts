@@ -1,18 +1,15 @@
 name: pytest
 
-on: [push]
+on: [push, pull_request]
 
 jobs:
   build:
 
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     timeout-minutes: 4
     strategy:
-      max-parallel: 4
-      fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8]
-        os: [ubuntu-latest, windows-latest]
+        python-version: [3.6, 3.7, 3.8, pypy3]
 
     steps:
     - uses: actions/checkout@v1
@@ -21,27 +18,11 @@ jobs:
       uses: actions/setup-python@v1
       with:
         python-version: ${{ matrix.python-version }}    
-    - name: Set up linux pip cache
+    - name: Set up pip cache
       uses: actions/cache@v1
       if: startsWith(runner.os, 'Linux')
       with:
         path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up mac pip cache
-      uses: actions/cache@v1
-      if: startsWith(runner.os, 'macOS')
-      with:
-        path: ~/Library/Caches/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
-    - name: Set up windows pip cache
-      uses: actions/cache@v1
-      if: startsWith(runner.os, 'Windows')
-      with:
-        path: ~\AppData\Local\pip\Cache
         key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
         restore-keys: |
           ${{ runner.os }}-pip-

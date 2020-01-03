@@ -1,5 +1,5 @@
-![](https://github.com/adam-douglass/draughts/workflows/pytest/badge.svg)
-[![codecov](https://codecov.io/gh/adam-douglass/draughts/branch/master/graph/badge.svg)](https://codecov.io/gh/adam-douglass/draughts)
+[![Actions Status](https://github.com/adam-douglass/draughts/workflows/pytest/badge.svg)](https://github.com/adam-douglass/draughts/actions)
+[![codecov](https://codecov.io/gh/adam-douglass/draughts/branch/master/graph/badge.svg?token=vQRgcsWXoq)](https://codecov.io/gh/adam-douglass/draughts)
 
 Draughts
 ========

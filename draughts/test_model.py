@@ -484,7 +484,7 @@ def test_mapping_of_mapping():
     with pytest.raises(KeyError):
         _ = test.a['x']['abc']
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(TypeError):
         test.a['cat'] = 10
 
     test.a['x']['cat'] = 10
@@ -495,7 +495,7 @@ def test_mapping_of_mapping():
     assert len(test.a['y']) == 1
     assert test.a['y']['dog'] == -100
 
-    with pytest.raises(AttributeError):
+    with pytest.raises(ValueError):
         test.a['red'] = 'can'
     with pytest.raises(ValueError):
         test.a['y']['red'] = 'can'

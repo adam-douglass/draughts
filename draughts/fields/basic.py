@@ -58,7 +58,7 @@ class Bytes(Field):
         return bytes(value)
 
     def sample(self):
-        length = random.randint(0, 2**20)
+        length = random.randint(0, 2**18)
         return bytes(random.getrandbits(8) for _ in range(length))
 
 
@@ -80,7 +80,7 @@ class Text(String):
     """A string with natural content."""
     def sample(self):
         chunks = random.randint(0, 128)
-        return '\n'.join(super().sample() for _ in range(chunks))
+        return '\n'.join(super(Text, self).sample() for _ in range(chunks))
 
 
 class Timestamp(Float):
@@ -100,7 +100,7 @@ class Enum(Field):
             self.conversion[val] = val
 
     def sample(self):
-        return random.choice(self.conversion.values())
+        return random.choice(list(self.conversion.values()))
 
     def cast(self, value):
         try:

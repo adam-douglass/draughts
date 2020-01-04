@@ -8,8 +8,12 @@ def minimal_field_sample(field_spec: Field):
         # Explicitly recursively call minimal sample on compounds
         if isinstance(field_spec, fields.Compound):
             return minimal_sample(field_spec.model)
-        # all other complex types should be able to handle an empty iterable
-        return field_spec.cast([])
+        elif isinstance(field_spec, ProxyField):
+            # ProxyField types should handle an empty iterable, but return a tuple
+            return field_spec.cast([])[0]
+        else:
+            # MultiValueField types should be able to handle an empty iterable
+            return field_spec.cast([])
     # all non complex fields can be sampled directly in the minimal case
     return field_spec.sample()
 

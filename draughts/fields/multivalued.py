@@ -48,7 +48,10 @@ class SimpleList(MultivaluedField):
 class TypedDict(dict):
     def __init__(self, data, cast):
         self.__cast = cast
-        super().__init__({k: cast(v) for k, v in data.items()})
+        if isinstance(data, dict):
+            super().__init__({k: cast(v) for k, v in data.items()})
+        else:
+            super().__init__({k: cast(v) for k, v in data})
 
     def setdefault(self, k, default=...):
         super().setdefault(k, default=self.__cast(default))

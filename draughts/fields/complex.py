@@ -2,6 +2,7 @@ import string
 import random
 
 from .bases import ProxyField, Field, MultivaluedField
+from ..util import memoize, memoize_on_first
 
 
 class Compound(ProxyField):
@@ -30,7 +31,7 @@ class List(ProxyField):
         super().__init__(**kwargs)
         assert isinstance(field, (MultivaluedField, ProxyField))
         self.field = field
-        self.proxy = _list_proxy(field)
+        self.proxy = _list_proxy(field.cast)
 
     def cast(self, value):
         # Only cast to list when we must to preserve structure of source document
@@ -48,20 +49,18 @@ class List(ProxyField):
         return self.field.flat_fields(prefix + '[].')
 
 
-def _list_proxy(child: Field):
-    cast = child.cast
-
+def _list_proxy(cast):
     class ListProxy:
         __slots__ = ['_data', '_view']
 
         """A proxy object over a list to enforce typing."""
 
         def __init__(self, data):
-            _t = [cast(_o) for _o in data]
-            self._view = [_r[0] for _r in _t]
+            self._view = []
             self._data = data
-            for index, _r in enumerate(_t):
-                self._data[index] = _r
+            for index, _d in enumerate(data):
+                _v, self._data[index] = cast(_d)
+                self._view.append(_v)
 
         def append(self, item):
             view, data = cast(item)
@@ -97,6 +96,10 @@ def _list_proxy(child: Field):
 
         def __getitem__(self, item):
             return self._view[item]
+
+        def __eq__(self, other):
+            return self._data == other._data
+
     return ListProxy
 
 
@@ -132,8 +135,10 @@ def _mapping_proxy(child: Field):
         __slots__ = ['_data', '_view']
 
         def __init__(self, data):
+            self._view = {}
             self._data = data
-            self._view = {k: cast(_o)[0] for k, _o in data.items()}
+            for _k, _o in data.items():
+                self._view[_k], self._data[_k] = cast(_o)
 
         def __iter__(self):
             return iter(self._view)
@@ -151,6 +156,9 @@ def _mapping_proxy(child: Field):
 
         def __len__(self):
             return len(self._data)
+
+        def __eq__(self, other):
+            return self._data == other._data
 
         def values(self):
             return self._view.values()

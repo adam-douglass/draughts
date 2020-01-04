@@ -1,4 +1,4 @@
-from .basic import Boolean, Integer, Float, Timestamp, Enum
+from .basic import Boolean, Integer, Float, Timestamp, Enum, Bytes
 from .basic import String, Keyword, Text, JSON, UUID
 from .basic import Any
 from .complex import Compound

@@ -2,7 +2,6 @@ import string
 import random
 
 from .bases import ProxyField, Field, MultivaluedField
-from ..util import memoize, memoize_on_first
 
 
 class Compound(ProxyField):

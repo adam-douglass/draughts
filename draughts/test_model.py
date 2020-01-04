@@ -6,7 +6,7 @@ import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes
 
 
 class CatError(Exception):
@@ -204,6 +204,13 @@ def test_create_compound():
         'first': {
             'key': '100',
             'value': 'b'
+        }
+    }
+
+    assert test == {
+        'first': {
+            'key': '100',
+            'value': b'b'
         }
     }
 
@@ -514,7 +521,7 @@ def test_mapping_of_compound():
 
     @model
     class Test:
-        a = Mapping(Compound(Pair), default={})
+        a = Mapping(Compound(Pair), factory=dict)
 
     test = Test({})
 
@@ -671,3 +678,21 @@ def test_optional_compound():
 # def test_union():
 #     raise NotImplementedError()
 
+def test_detect_missing_fields():
+    @model
+    class Outer:
+        tag = Compound(Label)
+
+    with pytest.raises(ValueError):
+        Outer()
+
+    with pytest.raises(ValueError):
+        Label()
+
+
+def test_bytes_field():
+    @model
+    class Test:
+        data = Bytes()
+
+    assert Test(data='str').data == b'str'

@@ -9,9 +9,11 @@ data that needs be normalized to account for things like missing data, types,
 or default values. This is a simple tool for generating boilerplate for data objects. 
 
 Notes:
- - Trys to be inplace, the dict you start with should still exist with the structure+type corrections applied.
+ - Try to be inplace, the dict you start with should still exist with the structure+type corrections applied.
  - Let IDEs check type annotations and attribute spelling.
  - Let you annotate fields with metadata that other systems may need in order to process the document properly.
  - Properties and methods are copied in.
 
+To Do:
+ - Documentation
  

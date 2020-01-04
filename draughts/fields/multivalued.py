@@ -1,3 +1,6 @@
+import string
+import random
+
 from .bases import MultivaluedField, Field
 
 
@@ -28,15 +31,18 @@ class TypedList(list):
 
 class SimpleList(MultivaluedField):
     """A list of non-complex """
-    def __init__(self, model, **kwargs):
+    def __init__(self, field, **kwargs):
         super().__init__(**kwargs)
-        self.model = model
+        self.field = field
 
     def cast(self, value):
-        return TypedList(value, cast=self.model.cast)
+        return TypedList(value, cast=self.field.cast)
+
+    def sample(self):
+        return TypedList([self.field.sample() for _ in range(random.randint(0, 10))], cast=self.field.cast)
 
     def flat_fields(self, prefix):
-        return {prefix + '[]': self.model}
+        return {prefix + '[]': self.field}
 
 
 class TypedDict(dict):
@@ -52,12 +58,18 @@ class TypedDict(dict):
 
 
 class SimpleMapping(MultivaluedField):
-    def __init__(self, model: Field, **kwargs):
+    def __init__(self, field: Field, **kwargs):
         super().__init__(**kwargs)
-        self.model = model
+        self.field = field
 
     def cast(self, value):
-        return TypedDict(value, self.model.cast)
+        return TypedDict(value, self.field.cast)
+
+    def sample(self):
+        return TypedDict({
+            ''.join(random.choices(string.ascii_letters, k=10)): self.field.sample()
+            for _ in range(random.randint(0, 10))
+        }, self.field.cast)
 
     def flat_fields(self, prefix):
-        return {prefix + '.*.': self.model}
+        return {prefix + '.*.': self.field}

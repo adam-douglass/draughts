@@ -1,13 +1,16 @@
 from .model_decorator import model_fields
-from .fields.bases import Field, ProxyField
+from .fields.bases import Field, ProxyField, MultivaluedField
 from . import fields
 
 
 def minimal_field_sample(field_spec: Field):
-    if isinstance(field_spec, ProxyField):
+    if isinstance(field_spec, (ProxyField, MultivaluedField)):
+        # Explicitly recursively call minimal sample on compounds
         if isinstance(field_spec, fields.Compound):
             return minimal_sample(field_spec.model)
-        return field_spec.EMPTY
+        # all other complex types should be able to handle an empty iterable
+        return field_spec.cast([])
+    # all non complex fields can be sampled directly in the minimal case
     return field_spec.sample()
 
 

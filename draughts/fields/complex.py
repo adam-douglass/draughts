@@ -1,3 +1,6 @@
+import string
+import random
+
 from .bases import ProxyField, Field, MultivaluedField
 
 
@@ -12,6 +15,10 @@ class Compound(ProxyField):
             return value, value._data
         obj = self.model(value)
         return obj, obj._data
+
+    def sample(self):
+        from ..randomizer import sample
+        return sample(self.model)
 
     def flat_fields(self, prefix):
         from ..model_decorator import model_fields_flat
@@ -33,6 +40,9 @@ class List(ProxyField):
             return value, value._data
         obj = self.proxy(value)
         return obj, obj._data
+
+    def sample(self):
+        return self.proxy([self.field.sample() for _ in range(random.randint(0, 10))])
 
     def flat_fields(self, prefix):
         return self.field.flat_fields(prefix + '[].')
@@ -103,6 +113,12 @@ class Mapping(ProxyField):
             return value, value._data
         obj = self.proxy(value)
         return obj, obj._data
+
+    def sample(self):
+        return self.proxy({
+            ''.join(random.choices(string.ascii_letters, k=10)): self.field.sample()
+            for _ in range(random.randint(0, 10))
+        })
 
     def flat_fields(self, prefix):
         return self.field.flat_fields(prefix + '.*.')

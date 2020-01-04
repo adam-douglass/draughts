@@ -37,8 +37,6 @@ class MultivaluedField(Field):
 
 class ProxyField(Field):
     """A base for fields where the underlying data and the 'view' are different."""
-    EMPTY = None
-
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 

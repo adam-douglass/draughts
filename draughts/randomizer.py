@@ -350,8 +350,9 @@ def minimal_sample(model, **data):
     return model(data)
 
 
-def sample(model):
-    data = {}
+def sample(model, **data):
     for field_name, field_spec in model_fields(model).items():
+        if field_name in data:
+            continue
         data[field_name] = field_spec.sample()
     return model(data)

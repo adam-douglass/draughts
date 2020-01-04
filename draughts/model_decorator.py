@@ -151,6 +151,14 @@ def model(cls=None, **metadata):
             if kwargs:
                 raise ValueError(f"Unexpected key provided: {kwargs.keys()}")
 
+        def __eq__(self, other):
+            if isinstance(other, dict):
+                return self == self.__class__(**other)
+            for name in fields.keys():
+                if getattr(self, name) != getattr(other, name):
+                    return False
+            return True
+
     # Lets over write some class properties to make it a little nicer
     ModelClass.__name__ = cls.__name__
     ModelClass.__doc__ = cls.__doc__

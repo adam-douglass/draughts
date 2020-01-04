@@ -46,12 +46,20 @@ class String(Field):
             return value.decode()
         return str(value)
 
+    def sample(self):
+        length = random.randint(0, 128)
+        return ''.join(random.choices(string.ascii_letters + string.digits + string.whitespace, k=length))
+
 
 class Bytes(Field):
     def cast(self, value):
         if isinstance(value, str):
             return value.encode()
         return bytes(value)
+
+    def sample(self):
+        length = random.randint(0, 2**20)
+        return bytes(random.getrandbits(8) for _ in range(length))
 
 
 class Keyword(String):
@@ -70,7 +78,9 @@ class UUID(Keyword):
 
 class Text(String):
     """A string with natural content."""
-    pass
+    def sample(self):
+        chunks = random.randint(0, 128)
+        return '\n'.join(super().sample() for _ in range(chunks))
 
 
 class Timestamp(Float):
@@ -88,6 +98,9 @@ class Enum(Field):
             self.conversion[val.value] = val
             self.conversion[val.name] = val
             self.conversion[val] = val
+
+    def sample(self):
+        return random.choice(self.conversion.values())
 
     def cast(self, value):
         try:

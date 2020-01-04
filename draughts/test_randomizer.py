@@ -23,4 +23,3 @@ def test_simple_fields():
     assert obj != sample(ManyTypes)
     assert obj == ManyTypes(json.loads(dumps(obj)))
     assert obj == sample(ManyTypes, **raw(obj))
-

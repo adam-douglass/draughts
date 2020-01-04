@@ -1,10 +1,13 @@
 from .model_decorator import model_fields
 from .fields.bases import Field, ProxyField
+from . import fields
 
 
 def minimal_field_sample(field_spec: Field):
     if isinstance(field_spec, ProxyField):
-        raise NotImplementedError()
+        if isinstance(field_spec, fields.Compound):
+            return minimal_sample(field_spec.model)
+        return field_spec.EMPTY
     return field_spec.sample()
 
 

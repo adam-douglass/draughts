@@ -65,11 +65,9 @@ def model(cls=None, **metadata):
                 compounds[_name] = field
                 for sub_name, sub_field in field.flat_fields(prefix=_name).items():
                     flat_fields[sub_name] = sub_field
-            elif isinstance(field, Field):
+            else:
                 basic[_name] = field
                 flat_fields[_name] = field
-            else:
-                raise NotImplementedError()
 
         elif isinstance(field, property):
             properties[_name] = field

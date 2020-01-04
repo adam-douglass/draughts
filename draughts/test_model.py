@@ -6,7 +6,7 @@ import pytest
 import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes, Boolean, UUID
 
 
 class CatError(Exception):
@@ -696,3 +696,34 @@ def test_bytes_field():
         data = Bytes()
 
     assert Test(data='str').data == b'str'
+
+
+def test_boolean_field():
+    @model
+    class Test:
+        data = Boolean()
+
+    assert Test(data='').data is False
+    assert Test(data='false').data is False
+    assert Test(data=0).data is False
+    assert Test(data=False).data is False
+    assert Test(data=[]).data is False
+    assert Test(data='FalSe').data is False
+    assert Test(data=None).data is False
+
+    assert Test(data=True).data is True
+    assert Test(data='true').data is True
+
+    with pytest.raises(ValueError):
+        Test()
+
+
+def test_uuid_field():
+    @model
+    class Test:
+        data = UUID()
+        rand: str = UUID(factory='random')
+
+    x = Test(data='an-id-string')
+    assert x.data == 'an-id-string'
+    assert len(x.rand) == 32

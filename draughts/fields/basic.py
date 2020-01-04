@@ -17,7 +17,8 @@ class Any(Field):
 class Boolean(Field):
     def cast(self, value):
         if isinstance(value, str):
-            return value[0:4].lower() == 'true'
+            if value[0:5].lower() == 'false':
+                return False
         return bool(value)
 
     def sample(self):

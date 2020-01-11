@@ -14,6 +14,5 @@ Notes:
  - Let you annotate fields with metadata that other systems may need in order to process the document properly.
  - Properties and methods are copied in.
 
-To Do:
- - Documentation
+
  

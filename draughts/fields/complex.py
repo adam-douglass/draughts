@@ -25,6 +25,30 @@ class Compound(ProxyField):
         return {prefix + '.' + _n: _v for _n, _v in model_fields_flat(self.model).items()}
 
 
+class DelayedCompound(ProxyField):
+    """A field who's type is defined by another model object.
+
+    This variant of compound can be used in cases where the
+    """
+    # def __init__(self, model, **kwargs):
+    #     super().__init__(**kwargs)
+    #     self.model = model
+    #
+    # def cast(self, value):
+    #     if isinstance(value, self.model):
+    #         return value, value._data
+    #     obj = self.model(value)
+    #     return obj, obj._data
+    #
+    # def sample(self):
+    #     from ..randomizer import sample
+    #     return sample(self.model)
+    #
+    # def flat_fields(self, prefix):
+    #     from ..model_decorator import model_fields_flat
+    #     return {prefix + '.' + _n: _v for _n, _v in model_fields_flat(self.model).items()}
+
+
 class List(ProxyField):
     def __init__(self, field: Field, **kwargs):
         super().__init__(**kwargs)

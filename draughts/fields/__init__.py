@@ -1,7 +1,7 @@
 from .basic import Boolean, Integer, Float, Timestamp, Enum, Bytes
 from .basic import String, Keyword, Text, JSON, UUID
 from .basic import Any
-from .complex import Compound
+from .complex import Compound, DelayedCompound
 
 
 def List(field_type, **kwargs):

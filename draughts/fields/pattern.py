@@ -18,71 +18,58 @@ class PatternString(String):
         return rstr.xeger(self.pattern)
 
 
-class MD5(PatternString):
+class FixedPatternString(PatternString):
+    REGEX = None
+    def __init__(self, **kwargs):
+        super().__init__(self.REGEX, **kwargs)
+
+
+class MD5(FixedPatternString):
     REGEX = r"^[a-f0-9]{32}$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class SHA1(PatternString):
+class SHA1(FixedPatternString):
     REGEX = r"^[a-f0-9]{40}$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class SHA256(PatternString):
+class SHA256(FixedPatternString):
     REGEX = r"^[a-f0-9]{64}$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class SSDeepHash(PatternString):
+class SSDeepHash(FixedPatternString):
     REGEX = r"^[0-9]{1,18}:[a-zA-Z0-9/+]{0,64}:[a-zA-Z0-9/+]{0,64}$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class Domain(PatternString):
+class Domain(FixedPatternString):
     REGEX = r"(?:(?:[A-Za-z0-9\u00a1-\uffff][A-Za-z0-9\u00a1-\uffff_-]{0,62})?[A-Za-z0-9\u00a1-\uffff]\.)+" \
             r"(?:xn--)?(?:[A-Za-z0-9\u00a1-\uffff]{2,}\.?)"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class Email(PatternString):
+class Email(FixedPatternString):
     REGEX = f"^[a-zA-Z0-9!#$%&'*+/=?^_‘{{|}}~-]+(?:\\.[a-zA-Z0-9!#$%&'*+/=?^_‘{{|}}~-]+)*@{Domain.REGEX}$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class IP(PatternString):
+class IP(FixedPatternString):
     REGEX = r"(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class PrivateIP(PatternString):
+class PrivateIP(FixedPatternString):
     REGEX = r"(?:(?:127|10)(?:\.(?:[2](?:[0-5][0-5]|[01234][6-9])|[1][0-9][0-9]|[1-9][0-9]|[0-9])){3})|" \
             r"(?:172\.(?:1[6-9]|2[0-9]|3[0-1])(?:\.(?:2[0-4][0-9]|25[0-5]|[1][0-9][0-9]|[1-9][0-9]|[0-9])){2}|" \
             r"(?:192\.168(?:\.(?:25[0-5]|2[0-4][0-9]|1[0-9][0-9]|[1-9][0-9]|[0-9])){2}))"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class PhoneNumber(PatternString):
+class PhoneNumber(FixedPatternString):
     REGEX = r"^(\+?\d{1,2})?[ .-]?(\(\d{3}\)|\d{3})[ .-](\d{3})[ .-](\d{4})$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class MACAddress(PatternString):
+class MACAddress(FixedPatternString):
     REGEX = r"^(?:(?:[0-9a-f]{2}-){5}[0-9a-f]{2}|(?:[0-9a-f]{2}:){5}[0-9a-f]{2})$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
 
 
-class URI(PatternString):
-    URI_PATH = r"(?:[/?#]\S*)"
-    REGEX = f"^((?:(?:[A-Za-z]*:)?//)?(?:\\S+(?::\\S*)?@)?(?:{IP.REGEX}|{Domain.REGEX})(?::\\d{{2,5}})?){URI_PATH}?$"
-    def __init__(self, **kwargs):
-        super().__init__(self.REGEX, **kwargs)
+class URIPath(FixedPatternString):
+    REGEX = r"(?:[/?#]\S*)"
+
+
+class URI(FixedPatternString):
+    REGEX = f"^((?:(?:[A-Za-z]*:)?//)?(?:\\S+(?::\\S*)?@)?(?:{IP.REGEX}|{Domain.REGEX})(?::\\d{{2,5}})?){URIPath.REGEX}?$"

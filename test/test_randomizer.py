@@ -97,6 +97,7 @@ def test_xeger_defaults():
         fields.PrivateIP,
         fields.PhoneNumber,
         fields.MACAddress,
+        fields.URIPath,
         fields.URI
     ]
 

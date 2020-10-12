@@ -16,29 +16,36 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 4
     strategy:
+      fail-fast: false
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9, pypy3]
+        container:
+          - python:3.6-slim
+          - python:3.7-slim
+          - python:3.8-slim
+          - python:3.9-slim
+          - pypy:3.6-slim
+
+    container: ${{ matrix.container }}
+
 
     steps:
     - uses: actions/checkout@v1
     
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v1
-      with:
-        python-version: ${{ matrix.python-version }}    
-    - name: Set up pip cache
-      uses: actions/cache@v1
-      if: startsWith(runner.os, 'Linux')
-      with:
-        path: ~/.cache/pip
-        key: ${{ runner.os }}-pip-${{ hashFiles('**/setup.py') }}
-        restore-keys: |
-          ${{ runner.os }}-pip-
+    - name: Choose python command
+      id: command
+      run: |
+        if [[ "${{ matrix.container }}" = pypy* ]] ;
+        then
+          echo "::set-output name=python::pypy3"
+        else
+          echo "::set-output name=python::python"
+        fi
 
     - name: Install package
       run: |
-        python -m pip install --upgrade pip
+        ${{ steps.command.outputs.python }} -m pip install --upgrade pip
         pip install -e .[test]
+
     - name: Lint with flake8
       run: |
         pip install flake8
@@ -46,6 +53,7 @@ jobs:
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+
     - name: Test with pytest
       run: |
         pip install pytest-cov

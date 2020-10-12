@@ -635,21 +635,26 @@ def test_optional():
         d = Mapping(Compound(Pair), optional=True)
 
     x = Test(b=None)
+    assert raw(x) == {'b': None}
 
     assert x.a is None
     x.a = 10
     with pytest.raises(ValueError):
         x.a = 'now'
     assert x.a == 10
+    assert raw(x) == {'a': 10, 'b': None}
     x.a = None
     assert x.a is None
 
+    assert x.b is None
     x.b = [10, '100']
     assert x.b == [10, 100]
 
+    assert x.c is None
     x.c = dict(a=999, b=999)
     assert x.c.a == 999
 
+    assert x.d is None
     x.d = dict(aaa=dict(a=-999, b=999))
     assert x.d['aaa'].a == -999
 

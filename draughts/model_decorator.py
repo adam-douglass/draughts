@@ -80,13 +80,23 @@ def model(cls=None, **metadata):
 
     field_names = set(fields.keys())
 
-    def field_property(_name, _cast):
-        class FieldProperty:
-            def __get__(self, instance, objtype):
-                return instance._data[_name]
+    def field_property(_name, _cast, optional):
+        if optional:
+            class FieldProperty:
+                def __get__(self, instance, objtype):
+                    return instance._data.get(_name)
 
-            def __set__(self, instance, value):
-                instance._data[_name] = _cast(value)
+                def __set__(self, instance, value):
+                    instance._data[_name] = _cast(value)
+
+        else:
+            class FieldProperty:
+                def __get__(self, instance, objtype):
+                    return instance._data[_name]
+
+                def __set__(self, instance, value):
+                    instance._data[_name] = _cast(value)
+
         return FieldProperty()
 
     class CompoundProperty:
@@ -126,7 +136,7 @@ def model(cls=None, **metadata):
                     _compounds[name], data[name] = field.cast(field['factory']())
                 elif field.metadata.get('optional', False):
                     _compounds[name] = None
-                    data[name] = None
+                    # data[name] = None
                     continue
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
@@ -142,7 +152,8 @@ def model(cls=None, **metadata):
                 elif 'factory' in field.metadata:
                     data[name] = cast(field['factory']())
                 elif field.metadata.get('optional', False):
-                    data[name] = None
+                    pass
+                    # data[name] = None
                 else:
                     raise ValueError(f"Missing key [{name}] to construct {cls.__name__}")
 
@@ -170,7 +181,7 @@ def model(cls=None, **metadata):
     for _name, field in compounds.items():
         setattr(ModelClass, _name, CompoundProperty(_name, field))
     for _name, field in basic.items():
-        setattr(ModelClass, _name, field_property(_name, field.cast))
+        setattr(ModelClass, _name, field_property(_name, field.cast, field['optional']))
 
     # If there were any pre-defined properties on the class make sure it is put back
     for _name, _p in properties.items():

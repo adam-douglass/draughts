@@ -15,6 +15,9 @@ setup(
     long_description_content_type='text/markdown',
     keywords="utility typechecking",
     url="https://github.com/adam-douglass/draughts/",
+    install_requires=[
+        'rstr'
+    ],
     extras_require={
         'test': ['pytest', 'pytest-subtests']
     },

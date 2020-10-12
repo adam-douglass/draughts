@@ -1,6 +1,8 @@
 from .basic import Boolean, Integer, Float, Timestamp, Enum, Bytes
 from .basic import String, Keyword, Text, JSON, UUID
 from .basic import Any
+from .pattern import PatternString, MD5, SHA256, PhoneNumber, MACAddress, PrivateIP, SSDeepHash, IP, \
+    Domain, Email, SHA1, URI
 from .complex import Compound, DelayedCompound
 
 

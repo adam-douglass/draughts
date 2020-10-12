@@ -5,7 +5,6 @@ import string
 
 from .bases import Field
 
-
 class Any(Field):
     def cast(self, value):
         return value

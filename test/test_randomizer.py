@@ -83,3 +83,23 @@ def test_compound_fields():
     assert obj != sample(MultiTypes)
     assert obj == MultiTypes(json.loads(dumps(obj)))
     assert obj == sample(MultiTypes, **raw(obj))
+
+
+def test_xeger_defaults():
+    patterned_fields = [
+        fields.MD5,
+        fields.SHA1,
+        fields.SHA256,
+        fields.SSDeepHash,
+        fields.Domain,
+        fields.Email,
+        fields.IP,
+        fields.PrivateIP,
+        fields.PhoneNumber,
+        fields.MACAddress,
+        fields.URI
+    ]
+
+    for field in patterned_fields:
+        instance = field()
+        assert instance.cast(instance.sample())

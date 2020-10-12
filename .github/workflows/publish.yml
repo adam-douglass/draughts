@@ -62,19 +62,19 @@ jobs:
             echo "::set-output name=python::python"
           fi
 
-      - name: Install build dependencies
-        run: |
-          if [[ "${{ matrix.container }}" = pypy* ]] ;
-          then
-            #apt-get update;
-            #apt-get install -yy build-essential;
-          elif [[ "${{ matrix.container }}" = "python:3.9-slim" ]]
-          then
-            #apt-get update;
-            #apt-get install -yy build-essential python-dev;
-          else
-            echo "ok"
-          fi
+#      - name: Install build dependencies
+#        run: |
+#          if [[ "${{ matrix.container }}" = pypy* ]] ;
+#          then
+#            apt-get update;
+#            apt-get install -yy build-essential;
+#          elif [[ "${{ matrix.container }}" = "python:3.9-slim" ]]
+#          then
+#            apt-get update;
+#            apt-get install -yy build-essential python-dev;
+#          else
+#            echo "ok"
+#          fi
 
       - name: Set up linux pip cache
         uses: actions/cache@v1

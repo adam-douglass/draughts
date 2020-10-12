@@ -1,0 +1,114 @@
+name: Upload Python Package
+
+on:
+  release:
+    types: [created]
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Set up Python
+      uses: actions/setup-python@v1
+      with:
+        python-version: '3.7'
+    - name: Build
+      run: |
+        python -m pip install --upgrade pip
+        pip install setuptools wheel twine
+        python setup.py sdist bdist_wheel
+        ls dist
+    - name: Upload packages
+      uses: actions/upload-artifact@v2
+      with:
+        name: dist
+        path: dist
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    strategy:
+      fail-fast: false
+      matrix:
+        container:
+          - python:3.6-slim
+          - python:3.7-slim
+          - python:3.8-slim
+          - python:3.9-slim
+          - pypy:3.6-slim
+
+    container: ${{ matrix.container }}
+
+    steps:
+      - name: Download packages
+        uses: actions/download-artifact@v2
+        with:
+          name: dist
+          path: dist
+
+      - name: Choose python command
+        id: command
+        run: |
+          if [[ "${{ matrix.container }}" = pypy* ]] ;
+          then
+            echo "::set-output name=python::pypy3"
+          else
+            echo "::set-output name=python::python"
+          fi
+
+      - name: Install build dependencies
+        run: |
+          if [[ "${{ matrix.container }}" = pypy* ]] ;
+          then
+            #apt-get update;
+            #apt-get install -yy build-essential;
+          elif [[ "${{ matrix.container }}" = "python:3.9-slim" ]]
+          then
+            #apt-get update;
+            #apt-get install -yy build-essential python-dev;
+          else
+            echo "ok"
+          fi
+
+      - name: Set up linux pip cache
+        uses: actions/cache@v1
+        if: startsWith(runner.os, 'Linux')
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ matrix.container }}-${{ hashFiles('**/setup.py') }}
+
+      - name: Install package
+        run: |
+          ${{ steps.command.outputs.python }} -m pip install --upgrade pip
+          pip install draughts[test]==${GITHUB_REF##refs/tags/v} -f ./dist
+
+      - name: Test with pytest
+        run: |
+          pytest --pyargs draughts
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    container: python:3.8-slim
+
+    steps:
+    - name: Set up Python
+      run:
+        pip install twine
+    - name: Download packages
+      uses: actions/download-artifact@v2
+      with:
+        name: dist
+        path: dist
+    - name: Publish
+      env:
+        TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        TWINE_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+      run: |
+        twine upload dist/*

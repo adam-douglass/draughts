@@ -2,9 +2,9 @@ import json
 import enum
 from copy import deepcopy
 
-from .model_decorator import model, dumps, raw
-from . import fields
-from .randomizer import minimal_sample, sample
+from draughts.model_decorator import model, dumps, raw
+from draughts import fields
+from draughts.randomizer import minimal_sample, sample
 
 
 class Colour(enum.IntEnum):

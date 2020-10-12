@@ -1,5 +1,5 @@
 [![Actions Status](https://github.com/adam-douglass/draughts/workflows/unittests/badge.svg)](https://github.com/adam-douglass/draughts/actions)
-[![codecov](https://codecov.io/gh/adam-douglass/draughts/branch/master/graph/badge.svg?token=vQRgcsWXoq)](https://codecov.io/gh/adam-douglass/draughts)
+[![codecov](https://codecov.io/gh/adam-douglass/draughts/branch/main/graph/badge.svg?token=vQRgcsWXoq)](https://codecov.io/gh/adam-douglass/draughts)
 
 Draughts
 ========
@@ -9,7 +9,7 @@ data that needs be normalized to account for things like missing data, types,
 or default values. This is a simple tool for generating boilerplate for data objects. 
 
 Notes:
- - Try to be inplace, the dict you start with should still exist with the structure+type corrections applied.
+ - Tries to be inplace, the dict you start with should still exist with the structure+type corrections applied.
  - Let IDEs check type annotations and attribute spelling.
  - Let you annotate fields with metadata that other systems may need in order to process the document properly.
  - Properties and methods are copied in.

@@ -1,12 +1,14 @@
 import enum
 import typing
 import time
+import json
+import datetime
 
 import pytest
-import json
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
-from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes, Boolean, UUID
+from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes, Boolean, UUID, \
+    DateString
 
 
 class CatError(Exception):
@@ -732,3 +734,21 @@ def test_uuid_field():
     x = Test(data='an-id-string')
     assert x.data == 'an-id-string'
     assert len(x.rand) == 32
+
+
+def test_datestring():
+    @model
+    class Test:
+        data = DateString()
+
+    match = False
+    for _ in range(3):
+        match = True
+        now = Test(data='NOW').data
+        match &= Test(data=time.time()).data[:16] == now[:16]
+        match &= Test(data=datetime.datetime.utcnow()).data[:16] == now[:16]
+
+        if match:
+            break
+    assert match
+

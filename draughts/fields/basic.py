@@ -3,6 +3,8 @@ import uuid
 import random
 import string
 
+import arrow
+
 from .bases import Field
 
 class Any(Field):
@@ -86,6 +88,21 @@ class Text(String):
 class Timestamp(Float):
     """A floating point number representing an offset from epoch"""
     pass
+
+
+class DateString(String):
+    """A field storing date."""
+    def cast(self, value):
+        if value == "NOW":
+            value = arrow.utcnow().isoformat()
+
+        try:
+            return arrow.Arrow.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ", 'utc').isoformat()
+        except (TypeError, ValueError):
+            return arrow.get(value).isoformat()
+
+    def sample(self):
+        return '2020-03-20T14:28:23.382748'
 
 
 class Enum(Field):

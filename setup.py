@@ -16,7 +16,8 @@ setup(
     keywords="utility typechecking",
     url="https://github.com/adam-douglass/draughts/",
     install_requires=[
-        'rstr'
+        'rstr',
+        'arrow'
     ],
     extras_require={
         'test': ['pytest', 'pytest-subtests']

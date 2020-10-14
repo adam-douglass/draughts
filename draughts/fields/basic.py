@@ -1,11 +1,13 @@
+import fractions
 import json
 import uuid
 import random
 import string
+from typing import Sequence
 
 import arrow
 
-from .bases import Field
+from .bases import Field, MultiField
 
 class Any(Field):
     def cast(self, value):
@@ -40,6 +42,36 @@ class Float(Field):
 
     def sample(self):
         return random.random() * 1000 - 500
+
+
+class SeparatedFraction(MultiField):
+    """Store a fraction as two values.
+
+    Most
+    """
+    def cast(self, value) -> Sequence[Any]:
+        if isinstance(value, fractions.Fraction):
+            pass
+        elif isinstance(value, (tuple, list)):
+            value = fractions.Fraction(*value)
+        else:
+            value = fractions.Fraction(value)
+        return value.as_integer_ratio()
+
+    def proxy(self, parent, values):
+        fraction = fractions.Fraction(*values)
+        parent[self.name + '_numerator'] = fraction.numerator
+        parent[self.name + '_denominator'] = fraction.denominator
+        return fraction
+
+    def sample(self):
+        return fractions.Fraction(random.randint(-1000000, 100000), random.randint(0, 100000))
+
+    def components(self):
+        return (
+            self.name + '_numerator',
+            self.name + '_denominator'
+        )
 
 
 class String(Field):

@@ -1,4 +1,5 @@
 import enum
+import fractions
 import typing
 import time
 import json
@@ -8,7 +9,7 @@ import pytest
 
 from draughts import model, model_fields, model_fields_flat, raw, dumps
 from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes, Boolean, UUID, \
-    DateString
+    DateString, SeparatedFraction
 
 
 class CatError(Exception):
@@ -752,3 +753,43 @@ def test_datestring():
             break
     assert match
 
+
+def test_multi_value_fraction():
+    @model
+    class Test:
+        data: fractions.Fraction = SeparatedFraction()
+        also: fractions.Fraction = SeparatedFraction(default=(1, 10))
+
+    x = Test(data=5)
+    assert x.data == 5
+    assert round(x.also) == 0
+    assert raw(x) == {
+        'data_numerator': 5,
+        'data_denominator': 1,
+        'also_numerator': 1,
+        'also_denominator': 10,
+    }
+    x.also *= 2
+    assert raw(x) == {
+        'data_numerator': 5,
+        'data_denominator': 1,
+        'also_numerator': 1,
+        'also_denominator': 5,
+    } or raw(x) == {
+        'data_numerator': 5,
+        'data_denominator': 1,
+        'also_numerator': 2,
+        'also_denominator': 10,
+    }
+
+    print(raw(x))
+    print(Test(raw(x)).data)
+    print(raw(Test(raw(x))))
+
+    assert Test(raw(x)) == x
+
+    with pytest.raises(Exception):
+        @model
+        class Test:
+            data = SeparatedFraction()
+            data_numerator = Integer()

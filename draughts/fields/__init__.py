@@ -1,9 +1,9 @@
 from .basic import Boolean, Integer, Float, Timestamp, Enum, Bytes
-from .basic import String, Keyword, Text, JSON, UUID, DateString
+from .basic import String, Keyword, Text, JSON, UUID, DateString, SeparatedFraction
 from .basic import Any
 from .pattern import PatternString, MD5, SHA256, PhoneNumber, MACAddress, PrivateIP, SSDeepHash, IP, \
     Domain, Email, SHA1, URI, URIPath
-from .complex import Compound, DelayedCompound
+from .complex import Compound
 
 
 def List(field_type, **kwargs):

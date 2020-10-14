@@ -47,6 +47,7 @@ jobs:
           - python:3.8-slim
           - python:3.9-slim
           - pypy:3.6-slim
+          - pypy:3.7-slim
 
     container: ${{ matrix.container }}
 
@@ -72,27 +73,6 @@ jobs:
           else
             echo "::set-output name=python::python"
           fi
-
-#      - name: Install build dependencies
-#        run: |
-#          if [[ "${{ matrix.container }}" = pypy* ]] ;
-#          then
-#            apt-get update;
-#            apt-get install -yy build-essential;
-#          elif [[ "${{ matrix.container }}" = "python:3.9-slim" ]]
-#          then
-#            apt-get update;
-#            apt-get install -yy build-essential python-dev;
-#          else
-#            echo "ok"
-#          fi
-
-#      - name: Set up linux pip cache
-#        uses: actions/cache@v1
-#        if: startsWith(runner.os, 'Linux')
-#        with:
-#          path: ~/.cache/pip
-#          key: ${{ runner.os }}-pip-${{ matrix.container }}-${{ hashFiles('**/setup.py') }}
 
       - name: Install package
         run: |

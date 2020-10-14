@@ -3,7 +3,7 @@ import json
 import weakref
 
 import typing
-from typing import Dict
+from typing import Dict, Set
 
 from .fields.bases import ProxyField, Field, MultiField
 
@@ -34,21 +34,23 @@ def model(cls=None, **metadata):
             return model(cls, **metadata)
         return capture
 
-    # Go through the class and pull out things we want
-    keys = set()
-    fields = {}       # The fields of the object
-    flat_fields = {}  # The fields of the object, recursively flattened
-    compounds = {}    # Compound type fields
-    multi_fields = {} # MultiValue type fields
-    basic = {}        # Fields with simple types only
-    casts = {}        # Each field's cast function
-    properties = {}   # Any previously defined properties
-    methods = {}      # Any methods from the class we want to preserve
+    # Track the keys that will be added to the model so that we can
+    # check if two fields conflict in what keys they use (primarily
+    # that multi-fields don't try and use the same hidden keys)
+    keys: Set[str] = set()
+
+    fields = {}        # The fields of the object
+    flat_fields = {}   # The fields of the object, recursively flattened
+    compounds = {}     # Compound type fields
+    multi_fields = {}  # MultiValue type fields
+    basic = {}         # Fields with simple types only
+    casts = {}         # Each field's cast function
+    properties = {}    # Any previously defined properties
+    methods = {}       # Any methods from the class we want to preserve
     static_values = {}
 
     for _name, field in cls.__dict__.items():
         if isinstance(field, Field):
-            keys.add(_name)
             casts[_name] = field.cast
             fields[_name] = field
             field.name = _name
@@ -64,12 +66,14 @@ def model(cls=None, **metadata):
                 field.cast = casts[_name] = make_optional_cast(field.cast)
 
             if isinstance(field, ProxyField):
+                keys.add(_name)
                 compounds[_name] = field
                 for sub_name, sub_field in field.flat_fields(prefix=_name).items():
                     flat_fields[sub_name] = sub_field
             elif isinstance(field, MultiField):
                 multi_fields[_name] = field
             else:
+                keys.add(_name)
                 basic[_name] = field
                 flat_fields[_name] = field
 
@@ -95,7 +99,7 @@ def model(cls=None, **metadata):
         _x = multi_field_components[_name] = tuple(field.components())
         for component in _x:
             if component in keys:
-               raise ValueError(f"Error creating model {cls.__name__} collision on key {component} with field {_name}")
+                raise ValueError(f"Error creating model {cls.__name__} collision on key {component} with field {_name}")
             else:
                 keys.add(component)
 
@@ -105,6 +109,8 @@ def model(cls=None, **metadata):
                 field_names.add(component)
         proxies[_name] = field.proxy
 
+        # If the multi field hasn't already used its name, reserve it.
+        keys.add(_name)
 
     def field_property(_name, _cast, optional):
         if optional:
@@ -180,14 +186,14 @@ def model(cls=None, **metadata):
 
             for name, field in multi_fields.items():
                 _components = multi_field_components[name]
-                if name in kwargs:
-                    _compounds[name] = field.proxy(data, field.cast(kw_pop(name)))
-                elif all(_c in kwargs for _c in _components):
+                if all(_c in kwargs for _c in _components):
                     _compounds[name] = field.proxy(data, [kw_pop(_c) for _c in _components])
-                elif data.get(name) is not None:
-                    _compounds[name] = field.proxy(data, field.cast(data[name]))
+                elif name in kwargs:
+                    _compounds[name] = field.proxy(data, field.cast(kw_pop(name)))
                 elif all(_c in data for _c in _components):
                     _compounds[name] = field.proxy(data, [data[_c] for _c in _components])
+                elif data.get(name) is not None:
+                    _compounds[name] = field.proxy(data, field.cast(data[name]))
                 elif 'default' in field.metadata:
                     _compounds[name] = field.proxy(data, field.cast(field['default']))
                 elif 'factory' in field.metadata:

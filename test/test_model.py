@@ -10,6 +10,7 @@ import pytest
 from draughts import model, model_fields, model_fields_flat, raw, dumps
 from draughts.fields import String, Integer, List, Compound, Mapping, Timestamp, Enum, Keyword, Bytes, Boolean, UUID, \
     DateString, SeparatedFraction
+from draughts.fields.bases import MultiField
 
 
 class CatError(Exception):
@@ -793,3 +794,66 @@ def test_multi_value_fraction():
         class Test:
             data = SeparatedFraction()
             data_numerator = Integer()
+
+
+def test_multi_value_duplicate():
+    """Make sure that multi-fields can use their own name as a component"""
+
+    class CopiedInteger(MultiField):
+        """Store a fraction as two values.
+
+        Most
+        """
+        def __init__(self, destination, **kwargs):
+            super().__init__(**kwargs)
+            self.destination = destination
+
+        def cast(self, value):
+            if isinstance(value, (tuple, list)):
+                value = int(value[0])
+            else:
+                value = int(value)
+            return [value, value]
+
+        def proxy(self, parent, values):
+            value = values[0]
+            parent[self.name] = value
+            parent[self.destination] = value
+            return value
+
+        def components(self):
+            return (
+                self.name,
+                self.destination
+            )
+
+    @model
+    class Test:
+        field = CopiedInteger('field_copy')
+
+    assert raw(Test(field=10)) == {'field': 10, 'field_copy': 10}
+    assert raw(Test(field=10, field_copy=10)) == {'field': 10, 'field_copy': 10}
+
+    # Check for collisions even within a multi field
+    with pytest.raises(Exception):
+        @model
+        class Test:
+            field = CopiedInteger('field')
+
+    with pytest.raises(Exception):
+        @model
+        class Test:
+            field = CopiedInteger('collide')
+            second = CopiedInteger('collide')
+
+    with pytest.raises(Exception):
+        @model
+        class Test:
+            field = CopiedInteger('second')
+            second = CopiedInteger('collide')
+
+    with pytest.raises(Exception):
+        @model
+        class Test:
+            field = CopiedInteger('collide')
+            second = CopiedInteger('field')

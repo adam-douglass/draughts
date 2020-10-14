@@ -49,14 +49,14 @@ class SeparatedFraction(MultiField):
 
     Most
     """
-    def cast(self, value) -> Sequence[Any]:
+    def cast(self, value) -> Sequence:
         if isinstance(value, fractions.Fraction):
             pass
         elif isinstance(value, (tuple, list)):
             value = fractions.Fraction(*value)
         else:
             value = fractions.Fraction(value)
-        return value.as_integer_ratio()
+        return value.numerator, value.denominator
 
     def proxy(self, parent, values):
         fraction = fractions.Fraction(*values)

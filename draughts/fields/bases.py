@@ -78,7 +78,7 @@ class MultiField(Field):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-    def cast(self, value) -> Sequence[Any]:
+    def cast(self, value) -> Sequence:
         """Convert an assigned value into a sequence of values suitable to pass to proxy."""
         raise NotImplementedError()
 

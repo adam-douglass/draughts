@@ -12,12 +12,12 @@ from datetime import datetime, timezone
 from .bases import Field, MultiField
 
 
-if sys.version_info > (3, 6):
-    def check_iso(value):
-        return datetime.fromisoformat(value).replace(tzinfo=timezone.utc).isoformat()
-else:
+if sys.version_info < (3, 7):
     def check_iso(value):
         return arrow.get(value).isoformat()
+else:
+    def check_iso(value):
+        return datetime.fromisoformat(value).replace(tzinfo=timezone.utc).isoformat()
 
 
 class Any(Field):

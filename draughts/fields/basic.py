@@ -1,3 +1,4 @@
+import sys
 import fractions
 import json
 import uuid
@@ -9,6 +10,14 @@ import arrow
 from datetime import datetime, timezone
 
 from .bases import Field, MultiField
+
+
+if sys.version_info[1] <= 6:
+    def check_iso(value):
+        return datetime.fromisoformat(value).replace(tzinfo=timezone.utc).isoformat()
+else:
+    def check_iso(value):
+        return arrow.get(value).isoformat()
 
 
 class Any(Field):
@@ -131,7 +140,7 @@ class DateString(String):
             return datetime.utcnow().isoformat()
 
         try:
-            return datetime.fromisoformat(value).replace(tzinfo=timezone.utc).isoformat()
+            return check_iso(value)
         except (TypeError, ValueError):
             return arrow.get(value).isoformat()
 

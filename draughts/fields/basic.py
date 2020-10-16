@@ -6,8 +6,10 @@ import string
 from typing import Sequence
 
 import arrow
+from datetime import datetime, timezone
 
 from .bases import Field, MultiField
+
 
 class Any(Field):
     def cast(self, value):
@@ -126,10 +128,10 @@ class DateString(String):
     """A field storing date."""
     def cast(self, value):
         if value == "NOW":
-            value = arrow.utcnow().isoformat()
+            return datetime.utcnow().isoformat()
 
         try:
-            return arrow.Arrow.strptime(value, "%Y-%m-%dT%H:%M:%S.%fZ", 'utc').isoformat()
+            return datetime.fromisoformat(value).replace(tzinfo=timezone.utc).isoformat()
         except (TypeError, ValueError):
             return arrow.get(value).isoformat()
 

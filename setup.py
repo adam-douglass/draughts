@@ -1,6 +1,6 @@
 import os
 from setuptools import setup, find_packages
-from pkg_resources import parse_version
+import packaging.version
 
 modules = None
 try:
@@ -16,6 +16,10 @@ except ImportError:
 
 
 version_string = os.environ.get('DRAUGHTS_VERSION', os.environ.get('GITHUB_REF', "0.0.0").lstrip('refs/tags/v'))
+try:
+    version_string = str(packaging.version.Version(version_string))
+except packaging.version.InvalidVersion:
+    version_string = '0.0.0'
 print("Building version ", version_string)
 
 try:
@@ -25,7 +29,7 @@ except FileNotFoundError:
 
 setup(
     name="draughts",
-    version=str(parse_version(version_string)),
+    version=version_string,
     packages=find_packages('draughts'),
     ext_modules=modules,
     

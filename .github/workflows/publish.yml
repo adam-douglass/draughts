@@ -69,8 +69,8 @@ jobs:
         done
 
         mkdir dist
-        mv * ./wheelhouse/*manylinux1_x86_64.whl ./dist
-        mv * ./wheelhouse/*manylinux2010_x86_64.whl ./dist
+        mv ./wheelhouse/*manylinux1_x86_64.whl ./dist
+        mv ./wheelhouse/*manylinux2010_x86_64.whl ./dist
         ls ./dist/
     - name: Upload packages
       uses: actions/upload-artifact@v1

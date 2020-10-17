@@ -9,11 +9,14 @@ try:
         'draughts/*.py',
         'draughts/*/*.py'
     ], language_level=3)
+    print("Using cython")
 except ImportError:
     cythonize = None
+    print("Using pure python")
 
 
-version_string = os.environ.get('BUILD_VERSION', os.environ.get('GITHUB_REF', "0.0.0").lstrip('refs/tags/v'))
+version_string = os.environ.get('DRAUGHTS_VERSION', os.environ.get('GITHUB_REF', "0.0.0").lstrip('refs/tags/v'))
+print("Building version ", version_string)
 
 try:
     readme = open(os.path.join(os.path.dirname(__file__), 'readme.md')).read()

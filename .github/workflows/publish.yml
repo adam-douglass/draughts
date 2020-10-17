@@ -54,7 +54,8 @@ jobs:
 
         # Compile wheels
         for PYNAME in "cp36-cp36m" "cp37-cp37m" "cp38-cp38" "cp39-cp39"; do
-            /opt/python/"${PYNAME}/bin/pip" wheel . --no-deps -w ./wheelhouse/
+          /opt/python/${PYNAME}/bin/pip install cython
+          /opt/python/${PYNAME}/bin/pip wheel . --no-deps -w ./wheelhouse/
         done
         ls ./wheelhouse/
 

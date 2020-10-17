@@ -43,6 +43,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Build Binary Packages
       run: |
+        set -x
+
         function repair_wheel {
             wheel="$1"
             if ! auditwheel show "$wheel"; then

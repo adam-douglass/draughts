@@ -1,13 +1,12 @@
-from abc import ABC
-from typing import Tuple, Any, Iterable, Sequence
+from typing import Dict, Tuple, Any, Sequence, Optional
 
 
 class Field:
     """An abstract data field for a model."""
     def __init__(self, **kwargs):
-        self.metadata = kwargs
-        self.metadata_defaults = {}
-        self.name = None
+        self.metadata: Dict[str, Any] = kwargs
+        self.metadata_defaults: Dict[str, Any] = {}
+        self.name: Optional[str] = None
 
     def __contains__(self, item):
         return item in self.metadata or item in self.metadata_defaults

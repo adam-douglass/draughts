@@ -1,4 +1,5 @@
 import typing
+from .model_decorator import model_fields
 from .fields import ListTypes, Compound
 import collections.abc
 
@@ -37,7 +38,7 @@ def _construct_field(field, value):
         return _c, _d
     else:
         try:
-            return field.check(value), None
+            return field.cast(value), None
         except (ValueError, TypeError) as _:
             return None, value
 
@@ -45,7 +46,7 @@ def _construct_field(field, value):
 def construct_safe(mod, data) -> typing.Tuple[typing.Any, typing.Dict]:
     if not isinstance(data, dict):
         return None, data
-    fields = mod.fields()
+    fields = model_fields(mod)
     clean = {}
     dropped = {}
     for key, value in data.items():

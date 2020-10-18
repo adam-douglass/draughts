@@ -33,8 +33,11 @@ def _construct_field(field, value):
 
     elif isinstance(field, Compound):
         _c, _d = construct_safe(field.model, value)
-        if len(_d) == 0:
-            _d = None
+        try:
+            if len(_d) == 0:
+                _d = None
+        except TypeError:
+            pass
         return _c, _d
     else:
         try:

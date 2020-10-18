@@ -24,6 +24,8 @@ def test_construct_safe():
             {'count': 2, 'size': 'big'},
             {'count': 100, 'size': 1},
             {'count': 3, 'siize': 1},
+            'frogs',
+            None,
         ]
     })
 
